@@ -7,19 +7,27 @@ import Util
 
 class KPI:
     def __init__(self, api, code, subcode, debugMode=True):
+        # Settings
         self.debugMode = debugMode
         self.api = api
         self.code = code
         self.subcode = subcode
+
+        # Constants
+        self.consolidationDiffThreshold = 0.4
 
         # Flow control
         self.initState = True
         self.actionRequired = False # Every minute we check whether or not to buy or sell something.
 
         # 5-minute average moving line
-        self.last20MinPrices = [0 for x in range(20)] # The latest prices are push_back into the list
+        self.windowSize = 20
+        self.last20MinPrices = [0 for x in range(self.windowSize)] # The latest prices are push_back into the list
         self.avg5MinPrice = 0.0
         self.avg5MinMovingLineGoingUp = True
+        self.avg10MinPrice = 0.0
+        self.avg10MinMovingLineGoingUp = True
+        self.consolidating = True   # 盤整
 
         self.currentMinute = 0 # 0~59
 
@@ -30,13 +38,16 @@ class KPI:
         self.api.quote.subscribe(target, quote_type="tick")
 
 
-    def update5MinFactors(self):
+    def updateKPIs(self):
         previousAvg5MinPrice = self.avg5MinPrice
+        previousAvg10MinPrice = self.avg10MinPrice
 
         # Handled initial states where no enough prices are collected
         if self.last20MinPrices[-1] == 0:
             self.avg5MinPrice = 0.0
+            self.avg10MinPrice = 0.0
         else:
+            # Update 5MA
             idx = -1
             nonZeroCount = 0
             while idx >= -5:
@@ -44,19 +55,35 @@ class KPI:
                     break
                 nonZeroCount += 1
                 idx -= 1
-            startValidIdx = 20 - nonZeroCount
+            startValidIdx = self.windowSize - nonZeroCount
             self.avg5MinPrice = mean(self.last20MinPrices[startValidIdx:])
+
+            # Update 10MA
+            idx = -1
+            nonZeroCount = 0
+            while idx >= -10:
+                if self.last20MinPrices[idx] == 0:
+                    break
+                nonZeroCount += 1
+                idx -= 1
+            startValidIdx = self.windowSize - nonZeroCount
+            self.avg10MinPrice = mean(self.last20MinPrices[startValidIdx:])
 
         self.initState = (previousAvg5MinPrice == 0.0)
         self.actionRequired &= (not self.initState)
         self.avg5MinMovingLineGoingUp = (previousAvg5MinPrice < self.avg5MinPrice)
+        self.avg10MinMovingLineGoingUp = (previousAvg10MinPrice < self.avg10MinPrice)
+        self.consolidating = (abs(previousAvg5MinPrice - self.avg5MinPrice) < self.consolidationDiffThreshold)
 
         if self.debugMode:
             print(f"last20MinPrices: {self.last20MinPrices}")
-            print(f"initState: {self.initState}")
-            print(f"previousAvg5MinPrice: {previousAvg5MinPrice}")
-            print(f"avg5MinPrice: {self.avg5MinPrice}")
+            # print(f"initState: {self.initState}")
+            # print(f"previousAvg5MinPrice: {previousAvg5MinPrice}")
+            # print(f"avg5MinPrice: {self.avg5MinPrice}")
             print(f"avg5MinMovingLineGoingUp: {self.avg5MinMovingLineGoingUp}")
+            # print(f"previousAvg10MinPrice: {previousAvg10MinPrice}")
+            # print(f"avg10MinPrice: {self.avg10MinPrice}")
+            print(f"avg10MinMovingLineGoingUp: {self.avg10MinMovingLineGoingUp}")
 
 
     def quoteCallback(self, topic: str, quote: dict):
@@ -74,4 +101,4 @@ class KPI:
             self.last20MinPrices.append(currentPrice)
             self.last20MinPrices.pop(0)
             self.actionRequired = True
-            self.update5MinFactors()
+            self.updateKPIs()

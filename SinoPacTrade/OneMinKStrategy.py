@@ -73,7 +73,7 @@ class OneMinKStrategy:
                 if priceGoingUp:
                     numOpenPosition = len(self.positions)
                     if self.positionAction == "B" and numOpenPosition >= self.maxOpenPosition:
-                        Util.log(f"Number of open interest ({numOpenPosition}) reached upper limit({self.maxOpenPosition})", level="Warning")
+                        Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit({self.maxOpenPosition})", level="Warning")
                     else:
                         orderPrice = self.kpi.last20MinPrices[-1]
                         quantity = 1
@@ -90,7 +90,7 @@ class OneMinKStrategy:
                                 self.profit += ((sellPrice - orderPrice) * self.contractSize)
                                 self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
                                 self.netIncome = self.profit - self.cost
-                            Util.log(f"=== Buy at {orderPrice} positions: {self.positions}, profit: {self.profit}, net income: {self.netIncome}  ===", level="Info")
+                            Util.log(f"===  Buy at {orderPrice} positions: {self.positions}, profit: {self.profit}, net income: {self.netIncome}  ===", level="Info")
                         else:
                             order = self.api.Order(
                                 action="Buy",
@@ -119,7 +119,7 @@ class OneMinKStrategy:
                     # self.maxOpenPosition should always be positive
                     numOpenPosition = len(self.positions)
                     if self.positionAction == "S" and numOpenPosition >= self.maxOpenPosition:
-                        Util.log(f"Number of open interest ({numOpenPosition}) reached lower limit({self.maxOpenPosition})", level="Warning")
+                        Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit({self.maxOpenPosition})", level="Warning")
                     else:
                         orderPrice = self.kpi.last20MinPrices[-1]
                         quantity = 1
