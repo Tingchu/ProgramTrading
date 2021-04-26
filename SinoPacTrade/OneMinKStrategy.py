@@ -28,7 +28,7 @@ class OneMinKStrategy:
         self.kpi = KPI.KPI(api, code, subcode, debugMode)
         self.profit = 0
         self.cost = 0 # transfer tax plus handling fees
-        self.netIncome # equal to (profit - cost)
+        self.netIncome = 0 # equal to (profit - cost)
         self.contractSize = 50 if code == "MXF" else 0 # Only support MXF (小台) currently
 
     def orderCallback(self, stat, msg):
@@ -88,9 +88,9 @@ class OneMinKStrategy:
                                 if not self.positions:
                                     self.positionAction = "Unknown"
                                 self.profit += ((sellPrice - orderPrice) * self.contractSize)
-                                self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
-                                self.netIncome = self.profit - self.cost
-                            Util.log(f"===  Buy at {orderPrice} positions: {self.positions}, profit: {self.profit}, net income: {self.netIncome}  ===", level="Info")
+                            self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
+                            self.netIncome = self.profit - self.cost
+                            Util.log(f"===  Buy at {orderPrice} positions: {self.positions}, profit: {self.profit}, cost: {self.cost}, net income: {self.netIncome}  ===", level="Info")
                         else:
                             order = self.api.Order(
                                 action="Buy",
@@ -107,6 +107,7 @@ class OneMinKStrategy:
                             result = self.waitForDeal(trade)
                             if result == "Dealed":
                                 numOpenPosition += quantity
+                                self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
                                 Util.log(f"=== Buy at {orderPrice} ===", level="Info")
                                 Util.log(f"=== Current open interest: {numOpenPosition} ===", level="Info")
                             else:
@@ -134,9 +135,9 @@ class OneMinKStrategy:
                                 if not self.positions:
                                     self.positionAction = "Unknown"
                                 self.profit += ((orderPrice - buyPrice) * self.contractSize)
-                                self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
-                                self.netIncome = self.profit - self.cost
-                            Util.log(f"=== Sell at {orderPrice} positions: {self.positions}, profit: {self.profit}, net income: {self.netIncome} ===", level="Info")
+                            self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
+                            self.netIncome = self.profit - self.cost
+                            Util.log(f"=== Sell at {orderPrice} positions: {self.positions}, profit: {self.profit}, cost: {self.cost}, net income: {self.netIncome} ===", level="Info")
                         else:
                             order = self.api.Order(
                                 action="Sell",
@@ -153,6 +154,7 @@ class OneMinKStrategy:
                             result = self.waitForDeal(trade)
                             if result == "Dealed":
                                 numOpenPosition -= quantity
+                                self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
                                 Util.log(f"=== Sell at {orderPrice} ===", level="Info")
                                 Util.log(f"=== Current open interest: {numOpenPosition} ===", level="Info")
                             else:
