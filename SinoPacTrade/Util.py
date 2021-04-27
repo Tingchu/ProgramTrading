@@ -2,15 +2,15 @@ import datetime
 import matplotlib.pyplot as plt
 import numpy
 
-def log(msg, level="", stdout=True, dump=True):
+def log(msg="", level="", stdout=True, dump=True):
     dateAndTime = datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
     levelString = "" if level == "" else f"[{level}]"
     outputString = f"{dateAndTime} : {msg}"
     if stdout:
-        print(outputString)
+        print(levelString + " " + outputString)
     if dump:
         with open("MoneyMaker.log", "a") as log:
-            log.write(f"{dateAndTime} : {msg}\n")
+            log.write(f"{dateAndTime} : {levelString} {msg}\n")
 
 
 def getPositions(api):

@@ -76,6 +76,7 @@ class KPI:
         self.consolidating = (abs(previousAvg5MinPrice - self.avg5MinPrice) <= self.consolidationDiffThreshold)
 
         if self.debugMode:
+            Util.log(dump=False) # Show time, stdout only
             print(f"last20MinPrices: {self.last20MinPrices}")
             # print(f"initState: {self.initState}")
             # print(f"previousAvg5MinPrice: {previousAvg5MinPrice}")
@@ -84,7 +85,7 @@ class KPI:
             # print(f"previousAvg10MinPrice: {previousAvg10MinPrice}")
             # print(f"avg10MinPrice: {self.avg10MinPrice}")
             # print(f"avg10MinMovingLineGoingUp: {self.avg10MinMovingLineGoingUp}")
-            print(f"consolidating: {self.consolidating}")
+            print(f"consolidating: {self.consolidating} ({previousAvg5MinPrice} --> {self.avg5MinPrice})")
 
 
     def quoteCallback(self, topic: str, quote: dict):
