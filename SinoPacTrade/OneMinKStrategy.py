@@ -82,6 +82,8 @@ class OneMinKStrategy:
                     numOpenPosition = len(self.positions)
                     if self.positionAction == "B" and numOpenPosition >= self.maxOpenPosition:
                         Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit({self.maxOpenPosition})", level="Warning")
+                    elif self.positionAction == "S" and self.kpi.consolidating == True:
+                        Util.log("Attempting to close out positions (buy) but consolidating")
                     else:
                         orderPrice = self.kpi.last20MinPrices[-1]
                         quantity = 1
@@ -129,6 +131,8 @@ class OneMinKStrategy:
                     numOpenPosition = len(self.positions)
                     if self.positionAction == "S" and numOpenPosition >= self.maxOpenPosition:
                         Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit({self.maxOpenPosition})", level="Warning")
+                    elif self.positionAction == "B" and self.kpi.consolidating == True:
+                        Util.log("Attempting to close out positions (sell) but consolidating")
                     else:
                         orderPrice = self.kpi.last20MinPrices[-1]
                         quantity = 1

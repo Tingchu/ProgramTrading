@@ -14,7 +14,7 @@ class KPI:
         self.subcode = subcode
 
         # Constants
-        self.consolidationDiffThreshold = 0.4
+        self.consolidationDiffThreshold = 0.61  # 0.01 to workaround for python float substraction error
 
         # Flow control
         self.initState = True
@@ -101,5 +101,5 @@ class KPI:
             self.currentMinute = minute
             self.last20MinPrices.append(currentPrice)
             self.last20MinPrices.pop(0)
-            self.actionRequired = True
             self.updateKPIs()
+            self.actionRequired = True
