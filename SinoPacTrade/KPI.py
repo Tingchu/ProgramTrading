@@ -73,7 +73,7 @@ class KPI:
         self.actionRequired &= (not self.initState)
         self.avg5MinMovingLineGoingUp = (previousAvg5MinPrice < self.avg5MinPrice)
         self.avg10MinMovingLineGoingUp = (previousAvg10MinPrice < self.avg10MinPrice)
-        self.consolidating = (abs(previousAvg5MinPrice - self.avg5MinPrice) < self.consolidationDiffThreshold)
+        self.consolidating = (abs(previousAvg5MinPrice - self.avg5MinPrice) <= self.consolidationDiffThreshold)
 
         if self.debugMode:
             print(f"last20MinPrices: {self.last20MinPrices}")
