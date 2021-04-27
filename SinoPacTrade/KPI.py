@@ -79,11 +79,12 @@ class KPI:
             print(f"last20MinPrices: {self.last20MinPrices}")
             # print(f"initState: {self.initState}")
             # print(f"previousAvg5MinPrice: {previousAvg5MinPrice}")
-            # print(f"avg5MinPrice: {self.avg5MinPrice}")
+            print(f"avg5MinPrice: {self.avg5MinPrice}")
             print(f"avg5MinMovingLineGoingUp: {self.avg5MinMovingLineGoingUp}")
             # print(f"previousAvg10MinPrice: {previousAvg10MinPrice}")
             # print(f"avg10MinPrice: {self.avg10MinPrice}")
-            print(f"avg10MinMovingLineGoingUp: {self.avg10MinMovingLineGoingUp}")
+            # print(f"avg10MinMovingLineGoingUp: {self.avg10MinMovingLineGoingUp}")
+            print(f"consolidating: {self.consolidating}")
 
 
     def quoteCallback(self, topic: str, quote: dict):

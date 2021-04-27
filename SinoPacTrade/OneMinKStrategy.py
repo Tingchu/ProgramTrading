@@ -1,9 +1,11 @@
 # Library import
+import datetime
 import time
+import matplotlib.pyplot as plt
 
 # Self defined class import
-import Util
 import KPI
+import Util
 
 class OneMinKStrategy:
     def __init__(self, api, code, subcode, positionAction, positions, maxPositions, debugMode=True):
@@ -30,6 +32,12 @@ class OneMinKStrategy:
         self.cost = 0 # transfer tax plus handling fees
         self.netIncome = 0 # equal to (profit - cost)
         self.contractSize = 50 if code == "MXF" else 0 # Only support MXF (小台) currently
+
+        # Chart
+        # plt.show()
+        # self.axes = plt.gca()
+        # self.lines, = self.axes.plot([], [], color='green', linestyle='-', linewidth=2, marker='o', markerfacecolor='black', markersize=8)
+        # Util.initializeChart(self.lines, self.axes)
 
     def orderCallback(self, stat, msg):
         if stat == "FDEAL":
@@ -90,7 +98,7 @@ class OneMinKStrategy:
                                 self.profit += ((sellPrice - orderPrice) * self.contractSize)
                             self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
                             self.netIncome = self.profit - self.cost
-                            Util.log(f"===  Buy at {orderPrice} positions: {self.positions}, profit: {self.profit}, cost: {self.cost}, net income: {self.netIncome}  ===", level="Info")
+                            Util.log(f"===  Buy at {orderPrice} positions: {self.positions} ({self.positionAction}), profit: {self.profit}, cost: {self.cost}, net income: {self.netIncome}  ===", level="Info")
                         else:
                             order = self.api.Order(
                                 action="Buy",
@@ -137,7 +145,7 @@ class OneMinKStrategy:
                                 self.profit += ((orderPrice - buyPrice) * self.contractSize)
                             self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
                             self.netIncome = self.profit - self.cost
-                            Util.log(f"=== Sell at {orderPrice} positions: {self.positions}, profit: {self.profit}, cost: {self.cost}, net income: {self.netIncome} ===", level="Info")
+                            Util.log(f"=== Sell at {orderPrice} positions: {self.positions} ({self.positionAction}), profit: {self.profit}, cost: {self.cost}, net income: {self.netIncome} ===", level="Info")
                         else:
                             order = self.api.Order(
                                 action="Sell",
