@@ -10,7 +10,7 @@ def log(msg="", level="", stdout=True, dump=True):
         print(levelString + " " + outputString)
     if dump:
         with open("MoneyMaker.log", "a") as log:
-            log.write(f"{dateAndTime} : {levelString} {msg}\n")
+            log.write(f"{dateAndTime} | {levelString} {msg}\n")
 
 
 def getPositions(api):
