@@ -77,7 +77,7 @@ class KPI:
 
         if self.debugMode:
             Util.log(dump=False) # Show time, stdout only
-            print(f"last20MinPrices: {self.last20MinPrices}")
+            Util.log(f"last20MinPrices: {self.last20MinPrices}", level="Info", dump=False)
             # print(f"initState: {self.initState}")
             # print(f"previousAvg5MinPrice: {previousAvg5MinPrice}")
             print(f"avg5MinPrice: {self.avg5MinPrice}")
@@ -91,9 +91,12 @@ class KPI:
     def quoteCallback(self, topic: str, quote: dict):
         # print(f"MyTopic: {topic}, MyQuote: {quote}")
         # Util.log("CurrentPrice: {}".format(quote["Close"][0]), level="Info", stdout=True, dump=False)
-        currentTime = quote["Time"]      # Should look like "21:59:56.123456"
+        timeString = quote["Time"]      # Should look like "21:59:56.123456"
+        currentTime = datetime.datetime.strptime(timeString, "%H:%M:%S.%f").time()
+        if Util.inBreakTime(currentTime):
+            return
         currentPrice = quote["Close"][0] # Should look like 16000.0
-        minute = datetime.datetime.strptime(currentTime, "%H:%M:%S.%f").timetuple().tm_min
+        minute = currentTime.minute
         if minute != self.currentMinute:
             # Another minute passed, need to update average moving lines and (maybe) make some deals
             if self.currentMinute != 0 and minute != (self.currentMinute + 1) % 60:

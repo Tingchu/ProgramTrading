@@ -2,6 +2,13 @@ import datetime
 import matplotlib.pyplot as plt
 import numpy
 
+def inBreakTime(time):
+    breakTimeStart1 = datetime.time(13, 45, 0)
+    breakTimeEnd1 = datetime.time(15, 0, 0)
+    breakTimeStart2 = datetime.time(5, 0, 0)
+    breakTimeEnd2 = datetime.time(8, 45, 0)
+    return (breakTimeStart1 <= time < breakTimeEnd1) or (breakTimeStart2 <= time < breakTimeEnd2)
+
 def log(msg="", level="", stdout=True, dump=True):
     dateAndTime = datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
     levelString = "" if level == "" else f"[{level}]"
