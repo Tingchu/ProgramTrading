@@ -28,7 +28,7 @@ class OneMinKStrategy:
         # Strategy data
         self.positions = positions
         self.positionAction = positionAction # Allowed values are "B", "S" and "Unknown"
-        self.kpi = KPI.KPI(api, code, subcode, debugMode)
+        self.kpi = KPI.KPI(api, code, subcode, "OneMinK", debugMode)
         self.profit = 0
         self.cost = 0 # transfer tax plus handling fees
         self.netIncome = 0 # equal to (profit - cost)
@@ -77,11 +77,11 @@ class OneMinKStrategy:
 
             self.kpi.actionRequired = False
 
-            if self.kpi.avg5MinMovingLineGoingUp:
-                priceGoingUp = self.kpi.last20MinPrices[-1] > self.kpi.last20MinPrices[-2]
+            if self.kpi.movingAvg5GoingUp:
+                priceGoingUp = self.kpi.recentPrices[-1] > self.kpi.recentPrices[-2]
                 if priceGoingUp:
                     numOpenPosition = len(self.positions)
-                    orderPrice = self.kpi.last20MinPrices[-1]
+                    orderPrice = self.kpi.recentPrices[-1]
                     if self.positionAction == "B" and numOpenPosition >= self.maxOpenPosition:
                         Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "S" and     \
@@ -128,7 +128,7 @@ class OneMinKStrategy:
                                 self.cancelOrder(trade)
 
             else: # moving line going down
-                priceGoingDown = self.kpi.last20MinPrices[-1] < self.kpi.last20MinPrices[-2]
+                priceGoingDown = self.kpi.recentPrices[-1] < self.kpi.recentPrices[-2]
                 if priceGoingDown:
                     # self.maxOpenPosition should always be positive
                     numOpenPosition = len(self.positions)
@@ -139,7 +139,7 @@ class OneMinKStrategy:
                          orderPrice < mean(self.positions) + 2:
                         Util.log("Attempting to close out positions (sell) but consolidating", level="Info")
                     else:
-                        orderPrice = self.kpi.last20MinPrices[-1]
+                        orderPrice = self.kpi.recentPrices[-1]
                         quantity = 1
                         if self.debugMode:
                             if not self.positions: # No positions

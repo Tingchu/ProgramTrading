@@ -6,30 +6,32 @@ from statistics import mean
 import Util
 
 class KPI:
-    def __init__(self, api, code, subcode, debugMode=True):
+    def __init__(self, api, code, subcode, strategy, debugMode=True):
         # Settings
         self.debugMode = debugMode
         self.api = api
         self.code = code
         self.subcode = subcode
+        self.strategy = strategy
 
         # Constants
         self.consolidationDiffThreshold = 0.61  # 0.01 to workaround for python float substraction error
+        self.windowSize = 20
 
         # Flow control
         self.initState = True
         self.actionRequired = False # Every minute we check whether or not to buy or sell something.
 
         # 5-minute average moving line
-        self.windowSize = 20
-        self.last20MinPrices = [0 for x in range(self.windowSize)] # The latest prices are push_back into the list
-        self.avg5MinPrice = 0.0
-        self.avg5MinMovingLineGoingUp = True
-        self.avg10MinPrice = 0.0
-        self.avg10MinMovingLineGoingUp = True
-        self.consolidating = True   # 盤整
+        self.recentPrices = [0 for x in range(self.windowSize)] # The latest prices are push_back into the list
+        self.movingAvg5 = 0.0
+        self.movingAvg5GoingUp = True
+        self.movingAvg10 = 0.0
+        self.movingAvg10GoingUp = True
 
         self.currentMinute = 0 # 0~59
+
+        self.consolidating = True   # 盤整
 
 
     def getStreamingData(self):
@@ -39,71 +41,73 @@ class KPI:
 
 
     def updateKPIs(self):
-        previousAvg5MinPrice = self.avg5MinPrice
-        previousAvg10MinPrice = self.avg10MinPrice
+        previousMovingAvg5 = self.movingAvg5
+        previousMovingAvg10 = self.movingAvg10
 
         # Handled initial states where no enough prices are collected
-        if self.last20MinPrices[-1] == 0:
-            self.avg5MinPrice = 0.0
-            self.avg10MinPrice = 0.0
+        if self.recentPrices[-1] == 0:
+            self.movingAvg5 = 0.0
+            self.movingAvg10 = 0.0
         else:
             # Update 5MA
             idx = -1
             nonZeroCount = 0
             while idx >= -5:
-                if self.last20MinPrices[idx] == 0:
+                if self.recentPrices[idx] == 0:
                     break
                 nonZeroCount += 1
                 idx -= 1
             startValidIdx = self.windowSize - nonZeroCount
-            self.avg5MinPrice = mean(self.last20MinPrices[startValidIdx:])
+            self.movingAvg5 = mean(self.recentPrices[startValidIdx:])
 
             # Update 10MA
             idx = -1
             nonZeroCount = 0
             while idx >= -10:
-                if self.last20MinPrices[idx] == 0:
+                if self.recentPrices[idx] == 0:
                     break
                 nonZeroCount += 1
                 idx -= 1
             startValidIdx = self.windowSize - nonZeroCount
-            self.avg10MinPrice = mean(self.last20MinPrices[startValidIdx:])
+            self.movingAvg10 = mean(self.recentPrices[startValidIdx:])
 
-        self.initState = (previousAvg5MinPrice == 0.0)
+        self.initState = (previousMovingAvg5 == 0.0)
         self.actionRequired &= (not self.initState)
-        self.avg5MinMovingLineGoingUp = (previousAvg5MinPrice < self.avg5MinPrice)
-        self.avg10MinMovingLineGoingUp = (previousAvg10MinPrice < self.avg10MinPrice)
-        self.consolidating = (abs(previousAvg5MinPrice - self.avg5MinPrice) <= self.consolidationDiffThreshold)
+        self.movingAvg5GoingUp = (previousMovingAvg5 < self.movingAvg5)
+        self.movingAvg10GoingUp = (previousMovingAvg10 < self.movingAvg10)
+        self.consolidating = (abs(previousMovingAvg5 - self.movingAvg5) <= self.consolidationDiffThreshold)
 
         if self.debugMode:
             Util.log(dump=False) # Show time, stdout only
-            Util.log(f"last20MinPrices: {self.last20MinPrices}", level="Info", dump=False)
+            Util.log(f"recentPrices: {self.recentPrices}", level="Info", dump=False)
             # print(f"initState: {self.initState}")
-            # print(f"previousAvg5MinPrice: {previousAvg5MinPrice}")
-            print(f"avg5MinPrice: {self.avg5MinPrice}")
-            print(f"avg5MinMovingLineGoingUp: {self.avg5MinMovingLineGoingUp}")
-            # print(f"previousAvg10MinPrice: {previousAvg10MinPrice}")
-            # print(f"avg10MinPrice: {self.avg10MinPrice}")
-            # print(f"avg10MinMovingLineGoingUp: {self.avg10MinMovingLineGoingUp}")
-            print(f"consolidating: {self.consolidating} ({previousAvg5MinPrice} --> {self.avg5MinPrice})")
+            # print(f"previousMovingAvg5: {previousMovingAvg5}")
+            print(f"movingAvg5: {self.movingAvg5}")
+            print(f"movingAvg5GoingUp: {self.movingAvg5GoingUp}")
+            # print(f"previousMovingAvg10: {previousMovingAvg10}")
+            # print(f"movingAvg10: {self.movingAvg10}")
+            # print(f"movingAvg10GoingUp: {self.movingAvg10GoingUp}")
+            print(f"consolidating: {self.consolidating} ({previousMovingAvg5} --> {self.movingAvg5})")
 
 
     def quoteCallback(self, topic: str, quote: dict):
         # print(f"MyTopic: {topic}, MyQuote: {quote}")
         # Util.log("CurrentPrice: {}".format(quote["Close"][0]), level="Info", stdout=True, dump=False)
         timeString = quote["Time"]      # Should look like "21:59:56.123456"
+        currentPrice = quote["Close"][0] # Should look like 16000.0
         currentTime = datetime.datetime.strptime(timeString, "%H:%M:%S.%f").time()
         if Util.inBreakTime(currentTime):
             return
-        currentPrice = quote["Close"][0] # Should look like 16000.0
-        minute = currentTime.minute
-        if minute != self.currentMinute:
-            # Another minute passed, need to update average moving lines and (maybe) make some deals
-            if self.currentMinute != 0 and minute != (self.currentMinute + 1) % 60:
-                missedMinutes = minute - self.currentMinute if minute - self.currentMinute >= 0 else minute + 60 - self.currentMinute
-                Util.log(f"Miss {missedMinutes} minutes of data", level="Warning")
-            self.currentMinute = minute
-            self.last20MinPrices.append(currentPrice)
-            self.last20MinPrices.pop(0)
-            self.updateKPIs()
-            self.actionRequired = True
+
+        if self.strategy == "OneMinK":
+            minute = currentTime.minute
+            if minute != self.currentMinute:
+                # Another minute passed, need to update average moving lines and (maybe) make some deals
+                if self.currentMinute != 0 and minute != (self.currentMinute + 1) % 60:
+                    missedMinutes = minute - self.currentMinute if minute - self.currentMinute >= 0 else minute + 60 - self.currentMinute
+                    Util.log(f"Miss {missedMinutes} minutes of data", level="Warning")
+                self.currentMinute = minute
+                self.recentPrices.append(currentPrice)
+                self.recentPrices.pop(0)
+                self.updateKPIs()
+                self.actionRequired = True
