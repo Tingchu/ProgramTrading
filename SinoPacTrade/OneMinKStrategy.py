@@ -132,6 +132,7 @@ class OneMinKStrategy:
                 if priceGoingDown:
                     # self.maxOpenPosition should always be positive
                     numOpenPosition = len(self.positions)
+                    orderPrice = self.kpi.recentPrices[-1]
                     if self.positionAction == "S" and numOpenPosition >= self.maxOpenPosition:
                         Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "B" and     \
@@ -139,7 +140,6 @@ class OneMinKStrategy:
                          orderPrice < mean(self.positions) + 2:
                         Util.log("Attempting to close out positions (sell) but consolidating", level="Info")
                     else:
-                        orderPrice = self.kpi.recentPrices[-1]
                         quantity = 1
                         if self.debugMode:
                             if not self.positions: # No positions

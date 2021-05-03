@@ -72,7 +72,6 @@ class KPI:
             self.movingAvg10 = mean(self.recentPrices[startValidIdx:])
 
         self.initState = (previousMovingAvg5 == 0.0)
-        self.actionRequired &= (not self.initState)
         self.movingAvg5GoingUp = (previousMovingAvg5 < self.movingAvg5)
         self.movingAvg10GoingUp = (previousMovingAvg10 < self.movingAvg10)
         self.consolidating = (abs(previousMovingAvg5 - self.movingAvg5) <= self.consolidationDiffThreshold)
@@ -88,6 +87,8 @@ class KPI:
             # print(f"movingAvg10: {self.movingAvg10}")
             # print(f"movingAvg10GoingUp: {self.movingAvg10GoingUp}")
             print(f"consolidating: {self.consolidating} ({previousMovingAvg5} --> {self.movingAvg5})")
+
+        return not self.initState
 
 
     def quoteCallback(self, topic: str, quote: dict):
@@ -109,5 +110,4 @@ class KPI:
                 self.currentMinute = minute
                 self.recentPrices.append(currentPrice)
                 self.recentPrices.pop(0)
-                self.updateKPIs()
-                self.actionRequired = True
+                self.actionRequired = self.updateKPIs()
