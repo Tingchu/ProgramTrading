@@ -8,9 +8,9 @@ from statistics import mean
 import KPI
 import Util
 
-class OneMinKStrategy:
+class InTimeStrategy:
     def __init__(self, api, code, subcode, positionAction, positions, maxPositions, debugMode=True):
-        Util.log(f"Create OneMinKStrategy with code:{code}, subcode:{subcode}, positions:{positions}, maxPositions:{maxPositions}, debugMode:{debugMode}")
+        Util.log(f"Create InTimeStrategy with code:{code}, subcode:{subcode}, positions:{positions}, maxPositions:{maxPositions}, debugMode:{debugMode}")
 
         # Common settings
         self.debugMode = debugMode
@@ -28,17 +28,11 @@ class OneMinKStrategy:
         # Strategy data
         self.positions = positions
         self.positionAction = positionAction # Allowed values are "B", "S" and "Unknown"
-        self.kpi = KPI.KPI(api, code, subcode, "OneMinK", debugMode)
+        self.kpi = KPI.KPI(api, code, subcode, "InTime", debugMode)
         self.profit = 0
         self.cost = 0 # transfer tax plus handling fees
         self.netIncome = 0 # equal to (profit - cost)
         self.contractSize = 50 if code == "MXF" else 0 # Only support MXF (小台) currently
-
-        # Chart
-        # plt.show()
-        # self.axes = plt.gca()
-        # self.lines, = self.axes.plot([], [], color='green', linestyle='-', linewidth=2, marker='o', markerfacecolor='black', markersize=8)
-        # Util.initializeChart(self.lines, self.axes)
 
     def orderCallback(self, stat, msg):
         if stat == "FDEAL":
@@ -77,17 +71,21 @@ class OneMinKStrategy:
 
             self.kpi.actionRequired = False
 
-            if self.kpi.movingAvg5GoingUp:
+            if self.kpi.movingAvg10GoingUp:
                 priceGoingUp = self.kpi.recentPrices[-1] > self.kpi.recentPrices[-2]
                 if priceGoingUp:
                     numOpenPosition = len(self.positions)
                     orderPrice = self.kpi.recentPrices[-1]
+                    meanPrice = 0 if not self.positions else mean(self.positions)
+                    stopLossPrice = meanPrice + 10
                     if self.positionAction == "B" and numOpenPosition >= self.maxOpenPosition:
                         Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "S" and     \
-                         self.kpi.consolidating5 == True and \
-                         orderPrice > mean(self.positions) - 2:
+                         self.kpi.consolidating10 == True and \
+                         orderPrice > meanPrice - 2:
                         Util.log("Attempting to close out positions (buy) but consolidating", level="Info")
+                    elif self.positionAction == "S" and meanPrice - 2 <= orderPrice <= stopLossPrice:
+                        Util.log("Attempting to close out positions (buy) but not reach stop-loss", level="Info")
                     else:
                         quantity = 1
                         if self.debugMode:
@@ -133,12 +131,16 @@ class OneMinKStrategy:
                     # self.maxOpenPosition should always be positive
                     numOpenPosition = len(self.positions)
                     orderPrice = self.kpi.recentPrices[-1]
+                    meanPrice = 0 if not self.positions else mean(self.positions)
+                    stopLossPrice = meanPrice - 10
                     if self.positionAction == "S" and numOpenPosition >= self.maxOpenPosition:
                         Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "B" and     \
-                         self.kpi.consolidating5 == True and \
-                         orderPrice < mean(self.positions) + 2:
+                         self.kpi.consolidating10 == True and \
+                         orderPrice < meanPrice + 2:
                         Util.log("Attempting to close out positions (sell) but consolidating", level="Info")
+                    elif self.positionAction == "B" and meanPrice + 2 >= orderPrice >= stopLossPrice:
+                        Util.log("Attempting to close out positions (sell) but not reach stop-loss", level="Info")
                     else:
                         quantity = 1
                         if self.debugMode:

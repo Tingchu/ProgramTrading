@@ -15,24 +15,28 @@ class KPI:
         self.strategy = strategy
 
         # Constants
-        self.consolidationDiffThreshold = 0.61  # 0.01 to workaround for python float substraction error
+        if strategy == "OneMinK":
+            self.consolidationDiffThreshold5 = 0.61  # 0.01 to workaround for python float substraction error
+            self.consolidationDiffThreshold10 = 0.41 # TODO: Not tuned yet
+        elif strategy == "InTime":
+            self.consolidationDiffThreshold5 = 0.21
+            self.consolidationDiffThreshold10 = 0.19
         self.windowSize = 20
 
         # Flow control
         self.initState = True
         self.actionRequired = False # Every minute we check whether or not to buy or sell something.
 
-        # 5-minute average moving line
+        # Indexes
         self.recentPrices = [0 for x in range(self.windowSize)] # The latest prices are push_back into the list
         self.movingAvg5 = 0.0
         self.movingAvg5GoingUp = True
         self.movingAvg10 = 0.0
         self.movingAvg10GoingUp = True
+        self.consolidating5 = True   # 5MA 盤整
+        self.consolidating10 = True  # 10MA 盤整
 
         self.currentMinute = 0 # 0~59
-
-        self.consolidating = True   # 盤整
-
 
     def getStreamingData(self):
         target = self.api.Contracts.Futures[self.code][self.subcode]
@@ -71,22 +75,28 @@ class KPI:
             startValidIdx = self.windowSize - nonZeroCount
             self.movingAvg10 = mean(self.recentPrices[startValidIdx:])
 
-        self.initState = (previousMovingAvg5 == 0.0)
+        if self.strategy == "OneMinK":
+            self.initState = (nonZeroCount < 5)
+        elif self.strategy == "InTime":
+            self.initState = (nonZeroCount < 10)
+
         self.movingAvg5GoingUp = (previousMovingAvg5 < self.movingAvg5)
         self.movingAvg10GoingUp = (previousMovingAvg10 < self.movingAvg10)
-        self.consolidating = (abs(previousMovingAvg5 - self.movingAvg5) <= self.consolidationDiffThreshold)
+        self.consolidating5 = (abs(previousMovingAvg5 - self.movingAvg5) <= self.consolidationDiffThreshold5)
+        self.consolidating10 = (abs(previousMovingAvg10 - self.movingAvg10) <= self.consolidationDiffThreshold10)
 
         if self.debugMode:
             Util.log(dump=False) # Show time, stdout only
             Util.log(f"recentPrices: {self.recentPrices}", level="Info", dump=False)
             # print(f"initState: {self.initState}")
             # print(f"previousMovingAvg5: {previousMovingAvg5}")
-            print(f"movingAvg5: {self.movingAvg5}")
+            # print(f"movingAvg5: {self.movingAvg5}")
             print(f"movingAvg5GoingUp: {self.movingAvg5GoingUp}")
             # print(f"previousMovingAvg10: {previousMovingAvg10}")
             # print(f"movingAvg10: {self.movingAvg10}")
-            # print(f"movingAvg10GoingUp: {self.movingAvg10GoingUp}")
-            print(f"consolidating: {self.consolidating} ({previousMovingAvg5} --> {self.movingAvg5})")
+            print(f"movingAvg10GoingUp: {self.movingAvg10GoingUp}")
+            print(f"consolidating5: {self.consolidating5} ({previousMovingAvg5} --> {self.movingAvg5})")
+            print(f"consolidating10: {self.consolidating10} ({previousMovingAvg10} --> {self.movingAvg10})")
 
         return not self.initState
 
@@ -111,3 +121,8 @@ class KPI:
                 self.recentPrices.append(currentPrice)
                 self.recentPrices.pop(0)
                 self.actionRequired = self.updateKPIs()
+
+        elif self.strategy == "InTime":
+            self.recentPrices.append(currentPrice)
+            self.recentPrices.pop(0)
+            self.actionRequired = self.updateKPIs()

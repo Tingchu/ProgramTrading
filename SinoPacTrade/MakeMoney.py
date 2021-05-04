@@ -5,6 +5,7 @@ import time
 from datetime import date
 from datetime import timedelta
 
+import InTimeStrategy
 import OneMinKStrategy
 import Util
 
@@ -15,7 +16,7 @@ class MakeMoney:
         self.loginFetchItemNum = 0
         self.loginMaxFetchItemNum = 4
         self.loginDone = False
-        self.availableStrategies = ["OneMinK"]
+        self.availableStrategies = ["OneMinK", "InTime"]
         self.strategy = ""
         self.password = "wDVT10203054"
         self.personID = "B122547371"
@@ -158,6 +159,9 @@ class MakeMoney:
     def startTrading(self, code, subcode, orderType="ROD", priceType="LMT"):
         if self.strategy == "OneMinK":
             woringStrategy = OneMinKStrategy.OneMinKStrategy(self.api, code, subcode, positionAction=self.positionAction, positions=self.closingPrices, maxPositions=2, debugMode=self.debugMode)
+            woringStrategy.Run(orderType, priceType)
+        elif self.strategy == "InTime":
+            woringStrategy = InTimeStrategy.InTimeStrategy(self.api, code, subcode, positionAction=self.positionAction, positions=self.closingPrices, maxPositions=2, debugMode=self.debugMode)
             woringStrategy.Run(orderType, priceType)
 
     def testTrading(self, code, subcode, orderType="ROD", priceType="LMT"):
