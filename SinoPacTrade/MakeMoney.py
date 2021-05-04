@@ -28,7 +28,7 @@ class MakeMoney:
         self.riskIndicator = 0 # 風險指標
         # self.openPositions = 0 # 未平倉口數
         self.closingPrices = [] # 各未平倉部位成交價
-        self.positionAction = "Unknown"
+        self.positionAction = ""
         # print(dir(self.api.quote))
 
         # live KPIs

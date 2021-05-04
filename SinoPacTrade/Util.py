@@ -28,7 +28,7 @@ def getPositions(api):
     positions = positions.data() # get the list
 
     closingPrices = []
-    positionAction = "Unknown"
+    positionAction = ""
     if positions[0]:
         positionAction = positions[0]["OrderBS"] # "B" or "S"
         for position in positions:

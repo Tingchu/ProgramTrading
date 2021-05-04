@@ -29,7 +29,7 @@ class InTimeStrategy:
 
         # Strategy data
         self.positions = positions
-        self.positionAction = positionAction # Allowed values are "B", "S" and "Unknown"
+        self.positionAction = positionAction # Allowed values are "B", "S" and ""
         self.kpi = KPI.KPI(api, code, subcode, "InTime", debugMode)
         self.profit = 0
         self.cost = 0 # transfer tax plus handling fees
@@ -99,7 +99,7 @@ class InTimeStrategy:
                             elif self.positionAction == "S":
                                 sellPrice = self.positions.pop(0)
                                 if not self.positions:
-                                    self.positionAction = "Unknown"
+                                    self.positionAction = ""
                                 self.profit += ((sellPrice - orderPrice) * self.contractSize)
                             self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
                             self.netIncome = self.profit - self.cost
@@ -154,7 +154,7 @@ class InTimeStrategy:
                             elif self.positionAction == "B":
                                 buyPrice = self.positions.pop(0)
                                 if not self.positions:
-                                    self.positionAction = "Unknown"
+                                    self.positionAction = ""
                                 self.profit += ((orderPrice - buyPrice) * self.contractSize)
                             self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
                             self.netIncome = self.profit - self.cost
