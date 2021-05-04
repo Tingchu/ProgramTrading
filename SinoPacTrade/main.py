@@ -1,9 +1,16 @@
+import argparse
 from threading import Event
 
 from MakeMoney import MakeMoney
 import Util
 
+def getArguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--strategy", "-s", required=True, choices=["OneMinK", "InTime"], help="strategy")
+    return parser.parse_args()
+
 if __name__ == '__main__':
+    args = getArguments()
     moneyMaker = MakeMoney()
     moneyMaker.login(enableTrading=False)
 
@@ -13,7 +20,7 @@ if __name__ == '__main__':
 
     Util.log("Login completed", level="Info")
 
-    moneyMaker.setStrategy("OneMinK")
+    moneyMaker.setStrategy(args.strategy)
 
     moneyMaker.getAccountData()
 
