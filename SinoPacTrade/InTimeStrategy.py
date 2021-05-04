@@ -84,7 +84,7 @@ class InTimeStrategy:
                         Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "S" and     \
                          self.kpi.consolidating10 == True and \
-                         orderPrice > meanPrice - self.minEarnPoint:
+                         orderPrice >= meanPrice - self.minEarnPoint:
                         Util.log("Attempting to close out positions (buy) but consolidating", level="Info")
                     elif self.positionAction == "S" and meanPrice - self.minEarnPoint <= orderPrice <= stopLossPrice:
                         Util.log("Attempting to close out positions (buy) but not reach stop-loss", level="Info")
@@ -139,7 +139,7 @@ class InTimeStrategy:
                         Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "B" and     \
                          self.kpi.consolidating10 == True and \
-                         orderPrice < meanPrice + self.minEarnPoint:
+                         orderPrice <= meanPrice + self.minEarnPoint:
                         Util.log("Attempting to close out positions (sell) but consolidating", level="Info")
                     elif self.positionAction == "B" and meanPrice + self.minEarnPoint >= orderPrice >= stopLossPrice:
                         Util.log("Attempting to close out positions (sell) but not reach stop-loss", level="Info")
