@@ -97,7 +97,7 @@ class InTimeStrategy:
                             elif self.positionAction == "B":
                                 self.positions.append(orderPrice)
                             elif self.positionAction == "S":
-                                sellPrice = self.positions.pop()
+                                sellPrice = self.positions.pop(0)
                                 if not self.positions:
                                     self.positionAction = "Unknown"
                                 self.profit += ((sellPrice - orderPrice) * self.contractSize)
@@ -152,7 +152,7 @@ class InTimeStrategy:
                             elif self.positionAction == "S":
                                 self.positions.append(orderPrice)
                             elif self.positionAction == "B":
-                                buyPrice = self.positions.pop()
+                                buyPrice = self.positions.pop(0)
                                 if not self.positions:
                                     self.positionAction = "Unknown"
                                 self.profit += ((orderPrice - buyPrice) * self.contractSize)
