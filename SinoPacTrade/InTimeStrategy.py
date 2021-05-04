@@ -20,7 +20,9 @@ class InTimeStrategy:
         self.subcode = subcode
 
         # Constants
-        self.handlingFee = 22 # per transaction
+        self.handlingFee = 22 # per position
+        self.stopLossPoint = 10
+        self.minEarnPoint = 2
 
         # Flow control
         self.dealSignal = False
@@ -77,14 +79,14 @@ class InTimeStrategy:
                     numOpenPosition = len(self.positions)
                     orderPrice = self.kpi.recentPrices[-1]
                     meanPrice = 0 if not self.positions else mean(self.positions)
-                    stopLossPrice = meanPrice + 10
+                    stopLossPrice = meanPrice + self.stopLossPoint
                     if self.positionAction == "B" and numOpenPosition >= self.maxOpenPosition:
                         Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "S" and     \
                          self.kpi.consolidating10 == True and \
-                         orderPrice > meanPrice - 2:
+                         orderPrice > meanPrice - self.minEarnPoint:
                         Util.log("Attempting to close out positions (buy) but consolidating", level="Info")
-                    elif self.positionAction == "S" and meanPrice - 2 <= orderPrice <= stopLossPrice:
+                    elif self.positionAction == "S" and meanPrice - self.minEarnPoint <= orderPrice <= stopLossPrice:
                         Util.log("Attempting to close out positions (buy) but not reach stop-loss", level="Info")
                     else:
                         quantity = 1
@@ -132,14 +134,14 @@ class InTimeStrategy:
                     numOpenPosition = len(self.positions)
                     orderPrice = self.kpi.recentPrices[-1]
                     meanPrice = 0 if not self.positions else mean(self.positions)
-                    stopLossPrice = meanPrice - 10
+                    stopLossPrice = meanPrice - self.stopLossPoint
                     if self.positionAction == "S" and numOpenPosition >= self.maxOpenPosition:
                         Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "B" and     \
                          self.kpi.consolidating10 == True and \
-                         orderPrice < meanPrice + 2:
+                         orderPrice < meanPrice + self.minEarnPoint:
                         Util.log("Attempting to close out positions (sell) but consolidating", level="Info")
-                    elif self.positionAction == "B" and meanPrice + 2 >= orderPrice >= stopLossPrice:
+                    elif self.positionAction == "B" and meanPrice + self.minEarnPoint >= orderPrice >= stopLossPrice:
                         Util.log("Attempting to close out positions (sell) but not reach stop-loss", level="Info")
                     else:
                         quantity = 1

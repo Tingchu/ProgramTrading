@@ -20,7 +20,7 @@ class OneMinKStrategy:
         self.subcode = subcode
 
         # Constants
-        self.handlingFee = 22 # per transaction
+        self.handlingFee = 22 # per position
 
         # Flow control
         self.dealSignal = False
