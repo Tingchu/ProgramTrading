@@ -61,6 +61,8 @@ class InTimeStrategy:
 
         # KPI.getStreamingData() will create a thread by api.quote.subscribe
         self.kpi.getStreamingData()
+        # KPI.start() will create another thread to handle data
+        self.kpi.start()
 
         self.api.set_order_callback(self.orderCallback)
 
@@ -81,6 +83,7 @@ class InTimeStrategy:
                     meanPrice = 0 if not self.positions else mean(self.positions)
                     stopLossPrice = meanPrice + self.stopLossPoint
                     if self.positionAction == "B" and numOpenPosition >= self.maxOpenPosition:
+                        # Risk control
                         Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "S" and     \
                          self.kpi.consolidating10 == True and \
@@ -136,6 +139,7 @@ class InTimeStrategy:
                     meanPrice = 0 if not self.positions else mean(self.positions)
                     stopLossPrice = meanPrice - self.stopLossPoint
                     if self.positionAction == "S" and numOpenPosition >= self.maxOpenPosition:
+                        # Risk control
                         Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "B" and     \
                          self.kpi.consolidating10 == True and \

@@ -1,5 +1,6 @@
 # Library import
 import datetime
+import threading
 from statistics import mean
 
 # Self defined class import
@@ -26,6 +27,7 @@ class KPI:
         # Flow control
         self.initState = True
         self.actionRequired = False # Every minute we check whether or not to buy or sell something.
+        self.buffer = []
 
         # Indexes
         self.recentPrices = [0 for x in range(self.windowSize)] # The latest prices are push_back into the list
@@ -37,6 +39,45 @@ class KPI:
         self.consolidating10 = True  # 10MA 盤整
 
         self.currentMinute = 0 # 0~59
+
+
+    def start(self):
+        monitor = threading.Thread(target=self.monitorAndProcessData)
+        monitor.start()
+
+
+    def monitorAndProcessData(self):
+        print("Remember to call getStreamingData first if no data comes in.")
+        while True:
+            if not self.buffer:
+                continue
+
+            Util.log(f"Buffered count: {len(self.buffer)}", dump=False)
+            pair = self.buffer.pop(0)
+            timeString = pair[0]   # Should look like "21:59:56.123456"
+            currentPrice = pair[1] # Should look like 16000.0
+            currentTime = datetime.datetime.strptime(timeString, "%H:%M:%S.%f").time()
+
+            if Util.inBreakTime(currentTime):
+                continue
+
+            if self.strategy == "OneMinK":
+                minute = currentTime.minute
+                if minute != self.currentMinute:
+                    # Another minute passed, need to update average moving lines and (maybe) make some deals
+                    if self.currentMinute != 0 and minute != (self.currentMinute + 1) % 60:
+                        missedMinutes = minute - self.currentMinute if minute - self.currentMinute >= 0 else minute + 60 - self.currentMinute
+                        Util.log(f"Miss {missedMinutes} minutes of data", level="Warning")
+                    self.currentMinute = minute
+                    self.recentPrices.append(currentPrice)
+                    self.recentPrices.pop(0)
+                    self.actionRequired = self.updateKPIs()
+
+            elif self.strategy == "InTime":
+                self.recentPrices.append(currentPrice)
+                self.recentPrices.pop(0)
+                self.actionRequired = self.updateKPIs()
+
 
     def getStreamingData(self):
         target = self.api.Contracts.Futures[self.code][self.subcode]
@@ -104,25 +145,6 @@ class KPI:
     def quoteCallback(self, topic: str, quote: dict):
         # print(f"MyTopic: {topic}, MyQuote: {quote}")
         # Util.log("CurrentPrice: {}".format(quote["Close"][0]), level="Info", stdout=True, dump=False)
-        timeString = quote["Time"]      # Should look like "21:59:56.123456"
-        currentPrice = quote["Close"][0] # Should look like 16000.0
-        currentTime = datetime.datetime.strptime(timeString, "%H:%M:%S.%f").time()
-        if Util.inBreakTime(currentTime):
-            return
-
-        if self.strategy == "OneMinK":
-            minute = currentTime.minute
-            if minute != self.currentMinute:
-                # Another minute passed, need to update average moving lines and (maybe) make some deals
-                if self.currentMinute != 0 and minute != (self.currentMinute + 1) % 60:
-                    missedMinutes = minute - self.currentMinute if minute - self.currentMinute >= 0 else minute + 60 - self.currentMinute
-                    Util.log(f"Miss {missedMinutes} minutes of data", level="Warning")
-                self.currentMinute = minute
-                self.recentPrices.append(currentPrice)
-                self.recentPrices.pop(0)
-                self.actionRequired = self.updateKPIs()
-
-        elif self.strategy == "InTime":
-            self.recentPrices.append(currentPrice)
-            self.recentPrices.pop(0)
-            self.actionRequired = self.updateKPIs()
+        # quote["Time"]      # Should look like "21:59:56.123456"
+        # quote["Close"][0] # Should look like 16000.0
+        self.buffer.append((quote["Time"], quote["Close"][0]))

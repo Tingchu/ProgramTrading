@@ -65,6 +65,8 @@ class OneMinKStrategy:
 
         # KPI.getStreamingData() will create a thread by api.quote.subscribe
         self.kpi.getStreamingData()
+        # KPI.start() will create another thread to handle data
+        self.kpi.start()
 
         self.api.set_order_callback(self.orderCallback)
 
