@@ -40,6 +40,10 @@ class KPI:
         self.movingAvg10GoingUp = True
         self.consolidating5 = True   # 5MA 盤整
         self.consolidating10 = True  # 10MA 盤整
+        self.consecutiveUp = 0   # Number of consecutive price-going-up
+        self.consecutiveUpAmplitude = 0   # max - min during the consecutive price going up
+        self.consecutiveDown = 0 # Number of consecutive price-going-down
+        self.consecutiveDownAmplitude = 0 # max - min during the consecutive price going down
 
         self.currentMinute = 0 # 0~59
 
@@ -109,32 +113,46 @@ class KPI:
             self.movingAvg5 = 0.0
             self.movingAvg10 = 0.0
         else:
-            # Update 5MA
+            # Update 5MA and 10MA
             idx = -1
             nonZeroCount = 0
-            while idx >= -5:
-                if self.recentPrices[idx] == 0:
-                    break
-                nonZeroCount += 1
+            while idx >= -self.windowSize:
+                if self.recentPrices[idx] != 0:
+                    nonZeroCount += 1
                 idx -= 1
-            startValidIdx = self.windowSize - nonZeroCount
-            self.movingAvg5 = mean(self.recentPrices[startValidIdx:])
 
-            # Update 10MA
-            idx = -1
-            nonZeroCount = 0
-            while idx >= -10:
-                if self.recentPrices[idx] == 0:
-                    break
-                nonZeroCount += 1
+            startValidIdx5 = self.windowSize - min(5, nonZeroCount)
+            self.movingAvg5 = mean(self.recentPrices[startValidIdx5:])
+            startValidIdx10 = self.windowSize - min(10, nonZeroCount)
+            self.movingAvg10 = mean(self.recentPrices[startValidIdx10:])
+
+            # Update consecution indexes
+            maxPriceInSequence = self.recentPrices[-1]
+            minPriceInSequence = self.recentPrices[-1]
+            downSequenceStop = False
+            upSequenceStop = False
+            idx = -2
+            while idx >= -self.windowSize and not (upSequenceStop and downSequenceStop):
+                if not upSequenceStop:
+                    if self.recentPrices[idx] <= self.recentPrices[idx+1]:
+                        minPriceInSequence = self.recentPrices[idx]
+                    else:
+                        upSequenceStop = True
+                        self.consecutiveUp = -1 - idx
+                        self.consecutiveUpAmplitude = self.recentPrices[-1] - minPriceInSequence
+                if not downSequenceStop:
+                    if self.recentPrices[idx] >= self.recentPrices[idx+1]:
+                        maxPriceInSequence = self.recentPrices[idx]
+                    else:
+                        downSequenceStop = True
+                        self.consecutiveDown = -1 - idx
+                        self.consecutiveDownAmplitude = maxPriceInSequence - self.recentPrices[-1]
                 idx -= 1
-            startValidIdx = self.windowSize - nonZeroCount
-            self.movingAvg10 = mean(self.recentPrices[startValidIdx:])
 
         if self.strategy == "OneMinK":
             self.initState = (nonZeroCount < 5)
         elif self.strategy == "InTime":
-            self.initState = (nonZeroCount < 10)
+            self.initState = (nonZeroCount < self.windowSize)
 
         self.movingAvg5GoingUp = (previousMovingAvg5 < self.movingAvg5)
         self.movingAvg10GoingUp = (previousMovingAvg10 < self.movingAvg10)
@@ -148,13 +166,15 @@ class KPI:
             # Util.log(f"recentSpeeds: {self.recentSpeeds}", level="Info", dump=False)
             # print(f"initState: {self.initState}")
             # print(f"previousMovingAvg5: {previousMovingAvg5}")
-            # print(f"movingAvg5: {self.movingAvg5}")
             print(f"movingAvg5GoingUp: {self.movingAvg5GoingUp}")
             # print(f"previousMovingAvg10: {previousMovingAvg10}")
-            # print(f"movingAvg10: {self.movingAvg10}")
             print(f"movingAvg10GoingUp: {self.movingAvg10GoingUp}")
             print(f"consolidating5: {self.consolidating5} ({previousMovingAvg5} --> {self.movingAvg5})")
             print(f"consolidating10: {self.consolidating10} ({previousMovingAvg10} --> {self.movingAvg10})")
+            print(f"consecutiveUp: {self.consecutiveUp}")
+            print(f"consecutiveUpAmplitude: {self.consecutiveUpAmplitude}")
+            print(f"consecutiveDown: {self.consecutiveDown}")
+            print(f"consecutiveDownAmplitude: {self.consecutiveDownAmplitude}")
 
         return not self.initState
 
