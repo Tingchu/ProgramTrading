@@ -23,6 +23,7 @@ class KPI:
             self.consolidationDiffThreshold5 = 0.21
             self.consolidationDiffThreshold10 = 0.19
         self.windowSize = 20
+        assert(self.windowSize >= 2)
 
         # Flow control
         self.initState = True
@@ -31,6 +32,8 @@ class KPI:
 
         # Indexes
         self.recentPrices = [0 for x in range(self.windowSize)] # The latest prices are push_back into the list
+        self.recentTimes = [datetime.datetime.now() for x in range(self.windowSize)]
+        self.recentSpeeds = [0 for x in range(self.windowSize - 1)]
         self.movingAvg5 = 0.0
         self.movingAvg5GoingUp = True
         self.movingAvg10 = 0.0
@@ -56,11 +59,13 @@ class KPI:
             pair = self.buffer.pop(0)
             timeString = pair[0]   # Should look like "21:59:56.123456"
             currentPrice = pair[1] # Should look like 16000.0
-            currentTime = datetime.datetime.strptime(timeString, "%H:%M:%S.%f").time()
+            currentDateTime = datetime.datetime.strptime(timeString, "%H:%M:%S.%f")
+            currentTime = currentDateTime.time()
 
             if Util.inBreakTime(currentTime):
                 continue
 
+            update = False
             if self.strategy == "OneMinK":
                 minute = currentTime.minute
                 if minute != self.currentMinute:
@@ -69,13 +74,23 @@ class KPI:
                         missedMinutes = minute - self.currentMinute if minute - self.currentMinute >= 0 else minute + 60 - self.currentMinute
                         Util.log(f"Miss {missedMinutes} minutes of data", level="Warning")
                     self.currentMinute = minute
-                    self.recentPrices.append(currentPrice)
-                    self.recentPrices.pop(0)
-                    self.actionRequired = self.updateKPIs()
+                    update = True
 
             elif self.strategy == "InTime":
+                update = True
+
+            if update:
+                previousPrice = self.recentPrices[-1]
+                previousDateTime = self.recentTimes[-1]
+                # TODO: Fix it: speed might be negative when changing to next day during 0:00am
+                timeDiff = (currentDateTime - previousDateTime).total_seconds()
+                speed = 0 if timeDiff == 0 else (currentPrice - previousPrice) / timeDiff
+                self.recentSpeeds.append(speed)
+                self.recentSpeeds.pop(0)
                 self.recentPrices.append(currentPrice)
                 self.recentPrices.pop(0)
+                self.recentTimes.append(currentDateTime)
+                self.recentTimes.pop(0)
                 self.actionRequired = self.updateKPIs()
 
 
@@ -127,8 +142,10 @@ class KPI:
         self.consolidating10 = (abs(previousMovingAvg10 - self.movingAvg10) <= self.consolidationDiffThreshold10)
 
         if self.debugMode:
-            Util.log(dump=False) # Show time, stdout only
+            # Util.log(dump=False) # Show time, stdout only
             Util.log(f"recentPrices: {self.recentPrices}", level="Info", dump=False)
+            # Util.log(f"recentTimes : {self.recentTimes}", level="Info", dump=False)
+            # Util.log(f"recentSpeeds: {self.recentSpeeds}", level="Info", dump=False)
             # print(f"initState: {self.initState}")
             # print(f"previousMovingAvg5: {previousMovingAvg5}")
             # print(f"movingAvg5: {self.movingAvg5}")
