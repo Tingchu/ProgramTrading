@@ -101,7 +101,7 @@ class InTimeStrategy:
                                 if not self.positions:
                                     self.positionAction = ""
                                 self.profit += ((sellPrice - orderPrice) * self.contractSize)
-                            self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
+                            self.cost += (int(orderPrice * self.contractSize * 0.00002) + self.handlingFee)
                             self.netIncome = self.profit - self.cost
                             Util.log(f"===  Buy at {orderPrice} positions: {self.positions} ({self.positionAction}), profit: {self.profit}, cost: {self.cost}, net income: {self.netIncome}  ===", level="Info")
                         else:
@@ -120,7 +120,7 @@ class InTimeStrategy:
                             result = self.waitForDeal(trade)
                             if result == "Dealed":
                                 numOpenPosition += quantity
-                                self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
+                                self.cost += (int(orderPrice * self.contractSize * 0.00002) + self.handlingFee)
                                 Util.log(f"=== Buy at {orderPrice} ===", level="Info")
                                 Util.log(f"=== Current open interest: {numOpenPosition} ===", level="Info")
                             else:
@@ -156,7 +156,7 @@ class InTimeStrategy:
                                 if not self.positions:
                                     self.positionAction = ""
                                 self.profit += ((orderPrice - buyPrice) * self.contractSize)
-                            self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
+                            self.cost += (int(orderPrice * self.contractSize * 0.00002) + self.handlingFee)
                             self.netIncome = self.profit - self.cost
                             Util.log(f"=== Sell at {orderPrice} positions: {self.positions} ({self.positionAction}), profit: {self.profit}, cost: {self.cost}, net income: {self.netIncome} ===", level="Info")
                         else:
@@ -175,7 +175,7 @@ class InTimeStrategy:
                             result = self.waitForDeal(trade)
                             if result == "Dealed":
                                 numOpenPosition -= quantity
-                                self.cost += (int(orderPrice * 50 * 0.00002) + self.handlingFee)
+                                self.cost += (int(orderPrice * self.contractSize * 0.00002) + self.handlingFee)
                                 Util.log(f"=== Sell at {orderPrice} ===", level="Info")
                                 Util.log(f"=== Current open interest: {numOpenPosition} ===", level="Info")
                             else:
