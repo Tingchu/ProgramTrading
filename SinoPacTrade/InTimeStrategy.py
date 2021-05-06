@@ -7,34 +7,19 @@ from statistics import mean
 # Self defined class import
 import KPI
 import Util
+from Strategy import Strategy
 
-class InTimeStrategy:
+class InTimeStrategy(Strategy):
     def __init__(self, api, code, subcode, positionAction, positions, maxPositions, debugMode=True):
+        super(InTimeStrategy, self).__init__(api, code, subcode, positionAction, positions, maxPositions, debugMode)
         Util.log(f"Create InTimeStrategy with code:{code}, subcode:{subcode}, positions:{positions}, maxPositions:{maxPositions}, debugMode:{debugMode}")
 
-        # Common settings
-        self.debugMode = debugMode
-        self.api = api
-        self.maxOpenPosition = maxPositions   # The maximum allowed num of open positions (unit: 口)
-        self.code = code
-        self.subcode = subcode
-
         # Constants
-        self.handlingFee = 22 # per position
         self.stopLossPoint = 10
         self.minEarnPoint = 2
 
-        # Flow control
-        self.dealSignal = False
-
-        # Strategy data
-        self.positions = positions
-        self.positionAction = positionAction # Allowed values are "B", "S" and ""
         self.kpi = KPI.KPI(api, code, subcode, "InTime", debugMode)
-        self.profit = 0
-        self.cost = 0 # transfer tax plus handling fees
-        self.netIncome = 0 # equal to (profit - cost)
-        self.contractSize = 50 if code == "MXF" else 0 # Only support MXF (小台) currently
+
 
     def orderCallback(self, stat, msg):
         if stat == "FDEAL":
