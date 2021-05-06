@@ -6,7 +6,7 @@ import Util
 
 def getArguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--strategy", "-s", required=True, choices=["OneMinK", "InTime"], help="strategy")
+    parser.add_argument("--strategy", "-s", required=True, choices=["OneMinK", "InTime", "InTimeReverse"], help="strategy")
     return parser.parse_args()
 
 if __name__ == '__main__':

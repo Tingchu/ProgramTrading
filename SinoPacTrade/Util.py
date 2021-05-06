@@ -12,7 +12,7 @@ def inBreakTime(time):
 def log(msg="", level="", stdout=True, dump=True):
     dateAndTime = datetime.datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
     levelString = "" if level == "" else f"[{level}]"
-    outputString = f"{dateAndTime} : {msg}"
+    outputString = f"{dateAndTime} | {msg}"
     if stdout:
         print(levelString + " " + outputString)
     if dump:

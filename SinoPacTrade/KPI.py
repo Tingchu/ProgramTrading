@@ -19,7 +19,7 @@ class KPI:
         if strategy == "OneMinK":
             self.consolidationDiffThreshold5 = 0.61  # 0.01 to workaround for python float substraction error
             self.consolidationDiffThreshold10 = 0.41 # TODO: Not tuned yet
-        elif strategy == "InTime":
+        elif "InTime" in strategy:
             self.consolidationDiffThreshold5 = 0.21
             self.consolidationDiffThreshold10 = 0.19
         self.windowSize = 20
@@ -45,6 +45,7 @@ class KPI:
         self.consecutiveDown = 0 # Number of consecutive price-going-down
         self.consecutiveDownAmplitude = 0 # max - min during the consecutive price going down
 
+        # private
         self.currentMinute = 0 # 0~59
 
 
@@ -80,7 +81,7 @@ class KPI:
                     self.currentMinute = minute
                     update = True
 
-            elif self.strategy == "InTime":
+            elif "InTime" in self.strategy:
                 update = True
 
             if update:
@@ -151,7 +152,7 @@ class KPI:
 
         if self.strategy == "OneMinK":
             self.initState = (nonZeroCount < 5)
-        elif self.strategy == "InTime":
+        elif "InTime" in self.strategy:
             self.initState = (nonZeroCount < self.windowSize)
 
         self.movingAvg5GoingUp = (previousMovingAvg5 < self.movingAvg5)
@@ -166,15 +167,12 @@ class KPI:
             # Util.log(f"recentSpeeds: {self.recentSpeeds}", level="Info", dump=False)
             # print(f"initState: {self.initState}")
             # print(f"previousMovingAvg5: {previousMovingAvg5}")
-            print(f"movingAvg5GoingUp: {self.movingAvg5GoingUp}")
+            print(f"movingAvg 5 / 10 GoingUp: {self.movingAvg5GoingUp} / {self.movingAvg10GoingUp}")
             # print(f"previousMovingAvg10: {previousMovingAvg10}")
-            print(f"movingAvg10GoingUp: {self.movingAvg10GoingUp}")
-            print(f"consolidating5: {self.consolidating5} ({previousMovingAvg5} --> {self.movingAvg5})")
+            # print(f"consolidating5: {self.consolidating5} ({previousMovingAvg5} --> {self.movingAvg5})")
             print(f"consolidating10: {self.consolidating10} ({previousMovingAvg10} --> {self.movingAvg10})")
-            print(f"consecutiveUp: {self.consecutiveUp}")
-            print(f"consecutiveUpAmplitude: {self.consecutiveUpAmplitude}")
-            print(f"consecutiveDown: {self.consecutiveDown}")
-            print(f"consecutiveDownAmplitude: {self.consecutiveDownAmplitude}")
+            print(f"consecutiveUp   count / amplitude: {self.consecutiveUp} / {self.consecutiveUpAmplitude}")
+            print(f"consecutiveDown count / amplitude: {self.consecutiveDown} / {self.consecutiveDownAmplitude}")
 
         return not self.initState
 

@@ -6,6 +6,7 @@ from datetime import date
 from datetime import timedelta
 
 import InTimeStrategy
+import InTimeReverseStrategy
 import OneMinKStrategy
 import Util
 
@@ -16,7 +17,7 @@ class MakeMoney:
         self.loginFetchItemNum = 0
         self.loginMaxFetchItemNum = 4
         self.loginDone = False
-        self.availableStrategies = ["OneMinK", "InTime"]
+        self.availableStrategies = ["OneMinK", "InTime", "InTimeReverse"]
         self.strategy = ""
         self.password = "wDVT10203054"
         self.personID = "B122547371"
@@ -159,10 +160,12 @@ class MakeMoney:
     def startTrading(self, code, subcode, orderType="ROD", priceType="LMT"):
         if self.strategy == "OneMinK":
             woringStrategy = OneMinKStrategy.OneMinKStrategy(self.api, code, subcode, positionAction=self.positionAction, positions=self.closingPrices, maxPositions=2, debugMode=self.debugMode)
-            woringStrategy.Run(orderType, priceType)
         elif self.strategy == "InTime":
             woringStrategy = InTimeStrategy.InTimeStrategy(self.api, code, subcode, positionAction=self.positionAction, positions=self.closingPrices, maxPositions=2, debugMode=self.debugMode)
-            woringStrategy.Run(orderType, priceType)
+        elif self.strategy == "InTimeReverse":
+            woringStrategy = InTimeReverseStrategy.InTimeReverseStrategy(self.api, code, subcode, positionAction=self.positionAction, positions=self.closingPrices, maxPositions=2, debugMode=self.debugMode)
+
+        woringStrategy.Run(orderType, priceType)
 
     def testTrading(self, code, subcode, orderType="ROD", priceType="LMT"):
         target = self.api.Contracts.Futures[code][subcode]
