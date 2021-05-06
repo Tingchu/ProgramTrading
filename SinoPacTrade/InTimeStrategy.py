@@ -15,7 +15,7 @@ class InTimeStrategy(Strategy):
         Util.log(f"Create InTimeStrategy with code:{code}, subcode:{subcode}, positions:{positions}, maxPositions:{maxPositions}, debugMode:{debugMode}")
 
         # Constants
-        self.stopLossPoint = 10
+        self.stopLossPoint = 5
         self.minEarnPoint = 2
 
         self.kpi = KPI.KPI(api, code, subcode, "InTime", debugMode)
@@ -67,13 +67,16 @@ class InTimeStrategy(Strategy):
                     stopLossPrice = meanPrice + self.stopLossPoint
                     if self.positionAction == "B" and numOpenPosition >= self.maxOpenPosition:
                         # Risk control
-                        Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit ({self.maxOpenPosition})", level="Info")
+                        pass
+                        # Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "S" and     \
                          self.kpi.consolidating10 == True and \
                          orderPrice >= meanPrice - self.minEarnPoint:
-                        Util.log("Attempting to close out positions (buy) but consolidating", level="Info")
+                        pass
+                        # Util.log("Attempting to close out positions (buy) but consolidating", level="Info")
                     elif self.positionAction == "S" and meanPrice - self.minEarnPoint <= orderPrice <= stopLossPrice:
-                        Util.log("Attempting to close out positions (buy) but not reach stop-loss", level="Info")
+                        pass
+                        # Util.log("Attempting to close out positions (buy) but not reach stop-loss", level="Info")
                     else:
                         quantity = 1
                         if self.debugMode:
@@ -90,6 +93,7 @@ class InTimeStrategy(Strategy):
                             self.cost += (int(orderPrice * self.contractSize * 0.00002) + self.handlingFee)
                             self.netIncome = self.profit - self.cost
                             Util.log(f"===  Buy at {orderPrice} positions: {self.positions} ({self.positionAction}), profit: {self.profit}, cost: {self.cost}, net income: {self.netIncome}  ===", level="Info")
+                            Util.log(f"{self.kpi.recentPrices}")
                         else:
                             order = self.api.Order(
                                 action="Buy",
@@ -122,13 +126,16 @@ class InTimeStrategy(Strategy):
                     stopLossPrice = meanPrice - self.stopLossPoint
                     if self.positionAction == "S" and numOpenPosition >= self.maxOpenPosition:
                         # Risk control
-                        Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit ({self.maxOpenPosition})", level="Info")
+                        pass
+                        # Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit ({self.maxOpenPosition})", level="Info")
                     elif self.positionAction == "B" and     \
                          self.kpi.consolidating10 == True and \
                          orderPrice <= meanPrice + self.minEarnPoint:
-                        Util.log("Attempting to close out positions (sell) but consolidating", level="Info")
+                        pass
+                        # Util.log("Attempting to close out positions (sell) but consolidating", level="Info")
                     elif self.positionAction == "B" and meanPrice + self.minEarnPoint >= orderPrice >= stopLossPrice:
-                        Util.log("Attempting to close out positions (sell) but not reach stop-loss", level="Info")
+                        pass
+                        # Util.log("Attempting to close out positions (sell) but not reach stop-loss", level="Info")
                     else:
                         quantity = 1
                         if self.debugMode:
@@ -145,6 +152,7 @@ class InTimeStrategy(Strategy):
                             self.cost += (int(orderPrice * self.contractSize * 0.00002) + self.handlingFee)
                             self.netIncome = self.profit - self.cost
                             Util.log(f"=== Sell at {orderPrice} positions: {self.positions} ({self.positionAction}), profit: {self.profit}, cost: {self.cost}, net income: {self.netIncome} ===", level="Info")
+                            Util.log(f"{self.kpi.recentPrices}")
                         else:
                             order = self.api.Order(
                                 action="Sell",
