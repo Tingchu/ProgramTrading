@@ -54,15 +54,13 @@ class InTimeStrategy(Strategy):
         # Start making money
         target = self.api.Contracts.Futures[self.code][self.subcode]
         while True:
-            time.sleep(1)
             if not self.kpi.actionRequired:
                 continue
 
             self.kpi.actionRequired = False
 
             if self.kpi.movingAvg10GoingUp:
-                priceGoingUp = self.kpi.recentPrices[-1] > self.kpi.recentPrices[-2]
-                if priceGoingUp:
+                if self.kpi.consecutiveUp >= 3 and self.kpi.consecutiveUpAmplitude >= 2:
                     numOpenPosition = len(self.positions)
                     orderPrice = self.kpi.recentPrices[-1]
                     meanPrice = 0 if not self.positions else mean(self.positions)
@@ -116,8 +114,7 @@ class InTimeStrategy(Strategy):
                                 self.cancelOrder(trade)
 
             else: # moving line going down
-                priceGoingDown = self.kpi.recentPrices[-1] < self.kpi.recentPrices[-2]
-                if priceGoingDown:
+                if self.kpi.consecutiveDown >= 3 and self.kpi.consecutiveDownAmplitude >= 2:
                     # self.maxOpenPosition should always be positive
                     numOpenPosition = len(self.positions)
                     orderPrice = self.kpi.recentPrices[-1]
