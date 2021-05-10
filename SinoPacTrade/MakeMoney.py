@@ -6,6 +6,7 @@ from datetime import date
 from datetime import timedelta
 
 import InTimeStrategy
+import InTimeHateLossStrategy
 import InTimeReverseStrategy
 import OneMinKStrategy
 import Util
@@ -17,7 +18,7 @@ class MakeMoney:
         self.loginFetchItemNum = 0
         self.loginMaxFetchItemNum = 4
         self.loginDone = False
-        self.availableStrategies = ["OneMinK", "InTime", "InTimeReverse"]
+        self.availableStrategies = ["OneMinK", "InTime", "InTimeReverse", "InTimeHateLoss"]
         self.strategy = ""
         self.password = "wDVT10203054"
         self.personID = "B122547371"
@@ -164,6 +165,8 @@ class MakeMoney:
             woringStrategy = InTimeStrategy.InTimeStrategy(self.api, code, subcode, positionAction=self.positionAction, positions=self.closingPrices, maxPositions=2, debugMode=self.debugMode)
         elif self.strategy == "InTimeReverse":
             woringStrategy = InTimeReverseStrategy.InTimeReverseStrategy(self.api, code, subcode, positionAction=self.positionAction, positions=self.closingPrices, maxPositions=2, debugMode=self.debugMode)
+        elif self.strategy == "InTimeHateLoss":
+            woringStrategy = InTimeHateLossStrategy.InTimeHateLossStrategy(self.api, code, subcode, positionAction=self.positionAction, positions=self.closingPrices, maxPositions=2, debugMode=self.debugMode)
 
         woringStrategy.Run(orderType, priceType)
 
