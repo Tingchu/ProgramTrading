@@ -12,11 +12,14 @@ from Strategy import Strategy
 class InTimeStrategy(Strategy):
     def __init__(self, api, code, subcode, positionAction, positions, maxPositions, debugMode=True):
         super(InTimeStrategy, self).__init__(api, code, subcode, positionAction, positions, maxPositions, debugMode)
-        Util.log(f"Create InTimeStrategy with code:{code}, subcode:{subcode}, positions:{positions}, maxPositions:{maxPositions}, debugMode:{debugMode}")
+        Util.log(f"Create InTimeStrategy with code:{code}, subcode:{subcode}, positions:{positions}, maxPositions:{maxPositions}, debugMode:{debugMode}", level="Info")
 
         # Constants
-        self.stopLossPoint = 5
-        self.minEarnPoint = 2
+        self.stopLossPoint = 8
+        self.minEarnPoint = 4
+        self.consecutiveCountThreshold = 8
+        self.consecutiveAmplitudeThreshold = 2
+        self.cdTime = 4
 
         self.kpi = KPI.KPI(api, code, subcode, "InTime", debugMode)
 
@@ -53,31 +56,35 @@ class InTimeStrategy(Strategy):
 
         # Start making money
         target = self.api.Contracts.Futures[self.code][self.subcode]
+        cd = 0
         while True:
             if not self.kpi.actionRequired:
                 continue
-
-            self.kpi.actionRequired = False
+            if cd > 0:
+                cd -= 1
+                self.kpi.actionRequired = False # To let KPI thread process next data
+                continue
+            # cd == 0, actionRequired
 
             if self.kpi.movingAvg10GoingUp:
-                if self.kpi.consecutiveUp >= 3 and self.kpi.consecutiveUpAmplitude >= 2:
+                if self.kpi.consecutiveUp >= self.consecutiveCountThreshold and \
+                   self.kpi.consecutiveUpAmplitude >= self.consecutiveAmplitudeThreshold:
                     numOpenPosition = len(self.positions)
                     orderPrice = self.kpi.recentPrices[-1]
                     meanPrice = 0 if not self.positions else mean(self.positions)
                     stopLossPrice = meanPrice + self.stopLossPoint
                     if self.positionAction == "B" and numOpenPosition >= self.maxOpenPosition:
                         # Risk control
-                        pass
-                        # Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit ({self.maxOpenPosition})", level="Info")
-                    elif self.positionAction == "S" and     \
-                         self.kpi.consolidating10 == True and \
-                         orderPrice >= meanPrice - self.minEarnPoint:
-                        pass
+                        Util.log(f"Number of open positions ({numOpenPosition}) reached upper limit ({self.maxOpenPosition})", level="Info")
+                    # elif self.positionAction == "S" and     \
+                    #      self.kpi.consolidating10 == True and \
+                    #      orderPrice >= meanPrice - self.minEarnPoint:
+                    #     pass
                         # Util.log("Attempting to close out positions (buy) but consolidating", level="Info")
                     elif self.positionAction == "S" and meanPrice - self.minEarnPoint <= orderPrice <= stopLossPrice:
-                        pass
-                        # Util.log("Attempting to close out positions (buy) but not reach stop-loss", level="Info")
+                        Util.log("Attempting to close out positions (buy) but not reach stop-loss", level="Info")
                     else:
+                        cd = self.cdTime
                         quantity = 1
                         if self.debugMode:
                             if not self.positions: # No positions
@@ -118,7 +125,8 @@ class InTimeStrategy(Strategy):
                                 self.cancelOrder(trade)
 
             else: # moving line going down
-                if self.kpi.consecutiveDown >= 3 and self.kpi.consecutiveDownAmplitude >= 2:
+                if self.kpi.consecutiveDown >= self.consecutiveCountThreshold and \
+                   self.kpi.consecutiveDownAmplitude >= self.consecutiveAmplitudeThreshold:
                     # self.maxOpenPosition should always be positive
                     numOpenPosition = len(self.positions)
                     orderPrice = self.kpi.recentPrices[-1]
@@ -126,17 +134,16 @@ class InTimeStrategy(Strategy):
                     stopLossPrice = meanPrice - self.stopLossPoint
                     if self.positionAction == "S" and numOpenPosition >= self.maxOpenPosition:
                         # Risk control
-                        pass
-                        # Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit ({self.maxOpenPosition})", level="Info")
-                    elif self.positionAction == "B" and     \
-                         self.kpi.consolidating10 == True and \
-                         orderPrice <= meanPrice + self.minEarnPoint:
-                        pass
+                        Util.log(f"Number of open positions ({numOpenPosition}) reached lower limit ({self.maxOpenPosition})", level="Info")
+                    # elif self.positionAction == "B" and     \
+                    #      self.kpi.consolidating10 == True and \
+                    #      orderPrice <= meanPrice + self.minEarnPoint:
+                    #     pass
                         # Util.log("Attempting to close out positions (sell) but consolidating", level="Info")
                     elif self.positionAction == "B" and meanPrice + self.minEarnPoint >= orderPrice >= stopLossPrice:
-                        pass
-                        # Util.log("Attempting to close out positions (sell) but not reach stop-loss", level="Info")
+                        Util.log("Attempting to close out positions (sell) but not reach stop-loss", level="Info")
                     else:
+                        cd = self.cdTime
                         quantity = 1
                         if self.debugMode:
                             if not self.positions: # No positions
@@ -175,6 +182,10 @@ class InTimeStrategy(Strategy):
                             else:
                                 Util.log(f"Cancelling order due to the result of waiting for deal: {result}", level="Warning")
                                 self.cancelOrder(trade)
+
+            # Put this line at the end of all the actions above so that KPI thread won't process
+            # the next data immediately
+            self.kpi.actionRequired = False
         
     def cancelOrder(self, trade):
         # cancel

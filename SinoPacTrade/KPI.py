@@ -55,8 +55,10 @@ class KPI:
 
 
     def monitorAndProcessData(self):
-        print("Remember to call getStreamingData first if no data comes in.")
         while True:
+            if self.actionRequired:
+                # Wait for Strategy to consume the action 
+                continue
             if not self.buffer:
                 continue
 
@@ -132,23 +134,26 @@ class KPI:
             minPriceInSequence = self.recentPrices[-1]
             downSequenceStop = False
             upSequenceStop = False
+            self.consecutiveUp = 1
+            self.consecutiveDown = 1
             idx = -2
             while idx >= -self.windowSize and not (upSequenceStop and downSequenceStop):
                 if not upSequenceStop:
                     if self.recentPrices[idx] <= self.recentPrices[idx+1]:
+                        self.consecutiveUp += 1
                         minPriceInSequence = self.recentPrices[idx]
                     else:
                         upSequenceStop = True
-                        self.consecutiveUp = -1 - idx
-                        self.consecutiveUpAmplitude = self.recentPrices[-1] - minPriceInSequence
                 if not downSequenceStop:
                     if self.recentPrices[idx] >= self.recentPrices[idx+1]:
+                        self.consecutiveDown += 1
                         maxPriceInSequence = self.recentPrices[idx]
                     else:
                         downSequenceStop = True
-                        self.consecutiveDown = -1 - idx
-                        self.consecutiveDownAmplitude = maxPriceInSequence - self.recentPrices[-1]
                 idx -= 1
+
+            self.consecutiveUpAmplitude = self.recentPrices[-1] - minPriceInSequence
+            self.consecutiveDownAmplitude = maxPriceInSequence - self.recentPrices[-1]
 
         if self.strategy == "OneMinK":
             self.initState = (nonZeroCount < 5)
