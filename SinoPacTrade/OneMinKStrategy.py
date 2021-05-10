@@ -12,7 +12,7 @@ from Strategy import Strategy
 class OneMinKStrategy(Strategy):
     def __init__(self, api, code, subcode, positionAction, positions, maxPositions, debugMode=True):
         super(OneMinKStrategy, self).__init__(api, code, subcode, positionAction, positions, maxPositions, debugMode)
-        Util.log(f"Create OneMinKStrategy with code:{code}, subcode:{subcode}, positions:{positions}, maxPositions:{maxPositions}, debugMode:{debugMode}")
+        Util.log(f"Create OneMinKStrategy with code:{code}, subcode:{subcode}, positions:{positions}, maxPositions:{maxPositions}, debugMode:{debugMode}", level="Info")
 
         self.kpi = KPI.KPI(api, code, subcode, "OneMinK", debugMode)
 

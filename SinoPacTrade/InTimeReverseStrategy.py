@@ -12,7 +12,7 @@ from Strategy import Strategy
 class InTimeReverseStrategy(Strategy):
     def __init__(self, api, code, subcode, positionAction, positions, maxPositions, debugMode=True):
         super(InTimeReverseStrategy, self).__init__(api, code, subcode, positionAction, positions, maxPositions, debugMode)
-        Util.log(f"Create InTimeReverseStrategy with code:{code}, subcode:{subcode}, positions:{positions}, maxPositions:{maxPositions}, debugMode:{debugMode}")
+        Util.log(f"Create InTimeReverseStrategy with code:{code}, subcode:{subcode}, positions:{positions}, maxPositions:{maxPositions}, debugMode:{debugMode}", level="Info")
 
         # Constants
         self.stopLossPoint = 10
